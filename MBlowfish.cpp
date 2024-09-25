@@ -1,4 +1,4 @@
-// MBlowfish.cpp -- Blowfish encrypter and decrypter
+// MBlowfish.cpp -- Blowfish encryption and decryption tool
 ////////////////////////////////////////////////////////////////////////////
 
 #include "MBlowfish.h"

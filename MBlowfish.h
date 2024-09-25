@@ -1,4 +1,4 @@
-// MBlowfish.h -- Blowfish encrypter and decrypter
+// MBlowfish.h -- Blowfish encryption and decryption tool
 ////////////////////////////////////////////////////////////////////////////
 
 #pragma once
