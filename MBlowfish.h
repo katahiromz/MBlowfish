@@ -16,17 +16,18 @@ public:
     MBlowfish(const char *passwd, size_t len);
     virtual ~MBlowfish();
 
-    void SetPassword(const char *passwd);
-    void SetPassword(const char *passwd, size_t len);
+    void set_password(const char *passwd);
+    void set_password(const char *passwd, size_t len);
 
     // NOTE: Parameter bytes must be a multiple of 8.
-    bool Encrypt(void *ptr, uint32_t bytes);
-    bool Decrypt(void *ptr, uint32_t bytes);
+    bool encrypt(void *ptr, uint32_t bytes);
+    bool decrypt(void *ptr, uint32_t bytes);
 
-    uint8_t *EncryptWithLength(const void *ptr, uint32_t& length);
-    uint8_t *DecryptWithLength(const void *ptr, uint32_t& length);
+    // return value needs delete[]
+    uint8_t *encrypt_with_length(const void *ptr, uint32_t& length);
+    uint8_t *decrypt_with_length(const void *ptr, uint32_t& length);
 
-    void Reset();
+    void reset();
 
 protected:
     MBlowfishImpl *m_pimpl;

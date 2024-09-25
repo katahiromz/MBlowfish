@@ -65,18 +65,18 @@ struct MBlowfishImpl
     uint32_t m_pa[bf_pa_size];
     uint32_t m_sb[bf_s_boxes][bf_num_entries];
 
-    void _InitTable(const char *passwd);
-    void _InitTable(const char *passwd, size_t len);
-    void _Enc(BF_Dword *x1, BF_Dword *x2);
-    void _Dec(BF_Dword *x1, BF_Dword *x2);
+    void _init_table(const char *passwd);
+    void _init_table(const char *passwd, size_t len);
+    void _encode(BF_Dword *x1, BF_Dword *x2);
+    void _decode(BF_Dword *x1, BF_Dword *x2);
 };
 
-void MBlowfishImpl::_InitTable(const char *passwd)
+void MBlowfishImpl::_init_table(const char *passwd)
 {
-    _InitTable(passwd, (passwd ? std::strlen(passwd) : 0));
+    _init_table(passwd, (passwd ? std::strlen(passwd) : 0));
 }
 
-void MBlowfishImpl::_InitTable(const char *passwd, size_t len)
+void MBlowfishImpl::_init_table(const char *passwd, size_t len)
 {
     size_t i, j;
     BF_Dword work, null0, null1;
@@ -100,7 +100,7 @@ void MBlowfishImpl::_InitTable(const char *passwd, size_t len)
 
     for (i = 0; i < bf_pa_size; i += 2)
     {
-        _Enc(&null0, &null1);
+        _encode(&null0, &null1);
         m_pa[i] = null0.dword;
         m_pa[i + 1] = null1.dword;
     }
@@ -109,7 +109,7 @@ void MBlowfishImpl::_InitTable(const char *passwd, size_t len)
     {
         for (i = 0; i < bf_num_entries; i += 2)
         {
-            _Enc(&null0, &null1);
+            _encode(&null0, &null1);
             m_sb[j][i] = null0.dword;
             m_sb[j][i + 1] = null1.dword;
         }
@@ -119,7 +119,7 @@ void MBlowfishImpl::_InitTable(const char *passwd, size_t len)
 #define F(x) \
     (((m_sb[0][x.bytes.zero] + m_sb[1][x.bytes.one]) ^ m_sb[2][x.bytes.two]) + m_sb[3][x.bytes.three])
 
-void MBlowfishImpl::_Enc(BF_Dword *x1, BF_Dword *x2)
+void MBlowfishImpl::_encode(BF_Dword *x1, BF_Dword *x2)
 {
     assert(x1);
     assert(x2);
@@ -141,7 +141,7 @@ void MBlowfishImpl::_Enc(BF_Dword *x1, BF_Dword *x2)
     *x2 = w1;
 }
 
-void MBlowfishImpl::_Dec(BF_Dword *x1, BF_Dword *x2)
+void MBlowfishImpl::_decode(BF_Dword *x1, BF_Dword *x2)
 {
     assert(x1);
     assert(x2);
@@ -168,19 +168,19 @@ void MBlowfishImpl::_Dec(BF_Dword *x1, BF_Dword *x2)
 MBlowfish::MBlowfish()
     : m_pimpl(new MBlowfishImpl)
 {
-    Reset();
+    reset();
 }
 
 MBlowfish::MBlowfish(const char *passwd)
     : m_pimpl(new MBlowfishImpl)
 {
-    SetPassword(passwd);
+    set_password(passwd);
 }
 
 MBlowfish::MBlowfish(const char *passwd, size_t len)
     : m_pimpl(new MBlowfishImpl)
 {
-    SetPassword(passwd, len);
+    set_password(passwd, len);
 }
 
  /*virtual*/ MBlowfish::~MBlowfish()
@@ -188,20 +188,20 @@ MBlowfish::MBlowfish(const char *passwd, size_t len)
     delete m_pimpl;
 }
 
-void MBlowfish::SetPassword(const char *passwd)
+void MBlowfish::set_password(const char *passwd)
 {
     size_t len = (passwd ? std::strlen(passwd) : 0);
-    SetPassword(passwd, len);
+    set_password(passwd, len);
 }
 
-void MBlowfish::SetPassword(const char *passwd, size_t len)
+void MBlowfish::set_password(const char *passwd, size_t len)
 {
-    Reset();
+    reset();
     if (len > 0)
-        m_pimpl->_InitTable(passwd, len);
+        m_pimpl->_init_table(passwd, len);
 }
 
-void MBlowfish::Reset()
+void MBlowfish::reset()
 {
     static const uint32_t pa_init[bf_pa_size] =
     {
@@ -479,7 +479,7 @@ void MBlowfish::Reset()
     memcpy(m_pimpl->m_sb, sb_init, sizeof(m_pimpl->m_sb));
 }
 
-bool MBlowfish::Encrypt(void *ptr, uint32_t bytes)
+bool MBlowfish::encrypt(void *ptr, uint32_t bytes)
 {
     assert(ptr || bytes == 0);
 
@@ -493,13 +493,13 @@ bool MBlowfish::Encrypt(void *ptr, uint32_t bytes)
     BF_QWord *work = reinterpret_cast<BF_QWord *>(ptr);
     for (uint32_t i = 0; i < bytes; i++)
     {
-        m_pimpl->_Enc(&work->dword0, &work->dword1);
+        m_pimpl->_encode(&work->dword0, &work->dword1);
         work++;
     }
     return true;
 }
 
-bool MBlowfish::Decrypt(void *ptr, uint32_t bytes)
+bool MBlowfish::decrypt(void *ptr, uint32_t bytes)
 {
     assert(ptr || bytes == 0);
 
@@ -513,13 +513,13 @@ bool MBlowfish::Decrypt(void *ptr, uint32_t bytes)
     BF_QWord *work = reinterpret_cast<BF_QWord *>(ptr);
     for (uint32_t i = 0; i < bytes; i++)
     {
-        m_pimpl->_Dec(&work->dword0, &work->dword1);
+        m_pimpl->_decode(&work->dword0, &work->dword1);
         work++;
     }
     return true;
 }
 
-uint8_t *MBlowfish::EncryptWithLength(const void *ptr, uint32_t& length)
+uint8_t *MBlowfish::encrypt_with_length(const void *ptr, uint32_t& length)
 {
     uint32_t fixed_length = (length + 7) / 8 * 8;
     assert(fixed_length % 8 == 0);
@@ -535,7 +535,7 @@ uint8_t *MBlowfish::EncryptWithLength(const void *ptr, uint32_t& length)
 
     auto content = encrypted + 2 * sizeof(uint32_t);
     memcpy(content, ptr, length);
-    if (!Encrypt(content, fixed_length))
+    if (!encrypt(content, fixed_length))
     {
         delete[] encrypted;
         return NULL;
@@ -545,7 +545,7 @@ uint8_t *MBlowfish::EncryptWithLength(const void *ptr, uint32_t& length)
     return encrypted;
 }
 
-uint8_t *MBlowfish::DecryptWithLength(const void *ptr, uint32_t& length)
+uint8_t *MBlowfish::decrypt_with_length(const void *ptr, uint32_t& length)
 {
     auto decrypted = new uint8_t[length + 1];
     memcpy(decrypted, ptr, length);
@@ -557,7 +557,7 @@ uint8_t *MBlowfish::DecryptWithLength(const void *ptr, uint32_t& length)
     assert(fixed_length % 8 == 0);
 
     auto content = decrypted + 2 * sizeof(uint32_t);
-    if (!Decrypt(content, fixed_length))
+    if (!decrypt(content, fixed_length))
     {
         delete[] decrypted;
         return NULL;
@@ -588,14 +588,14 @@ int main(void)
     uint8_t *enc;
     {
         MBlowfish bf(passwd);
-        enc = bf.EncryptWithLength(orig, len);
+        enc = bf.encrypt_with_length(orig, len);
     }
     printf("Encrypted Length: %d\n", int(len));
 
     uint8_t *dec;
     {
         MBlowfish bf(passwd);
-        dec = bf.DecryptWithLength(enc, len);
+        dec = bf.decrypt_with_length(enc, len);
     }
     printf("Decrypted: %s\n", dec);
     printf("Decrypted Length: %d\n", int(len));
